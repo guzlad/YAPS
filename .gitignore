@@ -1,0 +1,4 @@
+# Ignore all executables, we have to ask the user to manually download them due to licensing reasons.
+*.exe
+*.yaml
+LICENSE*
