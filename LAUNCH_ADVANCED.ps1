@@ -11,13 +11,19 @@ $ErrorActionPreference = "Stop"
 #         Miscord for Palog: https://github.com/miscord-dev/palog
 
 ###### MAIN SETTINGS ######
-# Absolute path to your SteamCMD folder. 
-# Example: $SteamCMDPath = "G:\SteamCMD"
-$SteamCMDPath = "G:\SteamCMD"
+# Set this to true only if you are NOT running PalServer on THIS PC (WIP: Not fully implemented yet)
+$UseRCONOnRemotePC = $false
 
-# Location of PalServer.exe (this is here because some SteamCMD users use force_install_dir to change the PalServer install location)
-# Example $PalServerPath ="G:\SteamCMD\steamapps\common\PalServer"
-$PalServerPath = "G:\SteamCMD\steamapps\common\PalServer"
+if(!$UseRCONOnRemotePC) {
+    # Absolute path to your SteamCMD folder. 
+    # Example: $SteamCMDPath = "G:\SteamCMD"
+    $SteamCMDPath = "G:\SteamCMD"
+
+    # Location of PalServer.exe (this is here because some SteamCMD users use force_install_dir to change the PalServer install location)
+    # Example $PalServerPath ="G:\SteamCMD\steamapps\common\PalServer"
+    $PalServerPath = "G:\SteamCMD\steamapps\common\PalServer"
+}
+
 
 # Sets whether SteamCMD should be re-ran every time the server starts or restarts
 $UpdateOrVerifyServer = $true
@@ -28,11 +34,11 @@ $IsCommunityServer = $false
 # Server launch parameters. If $IsCommunityServer is set to true EpicApp=PalServer will be added at the start
 $PalServerArguments = "'$(if ($IsCommunityServer) { 'EpicApp=PalServer ' })-useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS'"
 
-# Use PALOG if available
-$UsePalog = $true;
-
 # Set the palworld server priority to High (gives better performance in exchange for higher CPU usage)
 $UseHighPriority = $true
+
+# Use PALOG if available
+$UsePalog = $true;
 
 # Backup settings
 $BackupsEnabled = $true
@@ -55,8 +61,10 @@ $ServerRestartEnabled = $true
 # Server restart in hours (recommended 6 hours)
 $RestartIntervalHours = 3
 
-# Set this to true if you are NOT running PalServer on this PC (WIP: Not fully implemented yet)
-$UseRCONOnRemotePC = $false
+# Time in seconds between the server shutdown announcement and the actual shutdown
+$ShutdownWarningSeconds = 30
+
+# Settings only for people running this script from a remote computer (WIP: Not fully implemented yet)
 if ($UseRCONOnRemotePC) {
     $SteamCMDPath = ''
     $PalServerPath = ''
@@ -77,13 +85,20 @@ $AppID = 2394010
 # If it's the users's first time running SteamCMD or PalServer, or both
 $FirstRun = $false
 
-# Check if SteamCMD directory exists and remove any trailing backslashes
-if (!(Test-Path ($SteamCMDPath = $SteamCMDPath.TrimEnd("\"))) ) {
-    throw "ERROR: NON-EXISTENT SteamCMD path entered"
+# Users running this script remotely will only be using it for RCON, so SteamCMD or .ini checks are not needed. (WIP)
+if (!$UseRCONOnRemotePC) {
+
+    # Check if SteamCMD directory exists and remove any trailing backslashes
+    if (!(Test-Path ($SteamCMDPath = $SteamCMDPath.TrimEnd("\"))) ) {
+        throw "ERROR: NON-EXISTENT SteamCMD path entered"
+    }
+
+    # Define the command to update the game server, usually doesn't need changing
+    $UpdateCommand = $SteamCMDPath + "\steamcmd.exe +login anonymous +app_update $AppID validate +quit"
+
 }
 
-# Define the command to update the game server, usually doesn't need changing
-$UpdateCommand = $SteamCMDPath + "\steamcmd.exe +login anonymous +app_update $AppID validate +quit"
+
 
 funCtion UseSteamCMD {
     Write-Host (Get-Date -Format "t") ": Updating game server." -BackgroundColor DarkYellow -ForegroundColor Black -n;   Write-Host ([char]0xA0)
@@ -476,7 +491,7 @@ try {
                 # Shutdown/restart
                 Write-Host (Get-Date -Format "t") ": Restarting server." -BackgroundColor DarkRed -ForegroundColor Black -n;   Write-Host ([char]0xA0)
                 RCONSend("Broadcast $CurrentTime`:_Restarting_Server")
-                RCONSend("Shutdown 30 `"Shutting_Down`"")
+                RCONSend("Shutdown $ShutdownWarningSeconds `"Shutting_Down`"")
 
                 if($UsePalog -and (Invoke-Expression $CheckPalogCommand)) {
                     Write-Host (Get-Date -Format "t") ": Shutting down palog." -BackgroundColor DarkRed -ForegroundColor Black -n;   Write-Host ([char]0xA0)
@@ -484,7 +499,7 @@ try {
                     Get-Process | Where-Object {$_.Path -like $PalogExecutablePath} -ErrorAction SilentlyContinue | Stop-Process -Force
                     #Get-Process "palog" -ErrorAction SilentlyContinue | Stop-Process -PassThru
                 }
-                $LoopIntervalSeconds = 31
+                $LoopIntervalSeconds = $ShutdownWarningSeconds + 5
             }
         }
 
@@ -499,10 +514,10 @@ finally {
     # Shutdown/restart
     Write-Host (Get-Date -Format "t") ": Shutting down server." -BackgroundColor DarkRed -ForegroundColor Black -n;   Write-Host ([char]0xA0)
     RCONSend("Broadcast $CurrentTime`:_SHUTTING_DOWN_IMMEDIATELY")
-    RCONSend("Shutdown 1 SHUTTING_DOWN_IMMEDIATELY") #  `"SHUTTING_DOWN_IMMEDIATELY`"
+    RCONSend("Shutdown $ShutdownWarningSeconds SHUTTING_DOWN_IMMEDIATELY") #  `"SHUTTING_DOWN_IMMEDIATELY`"
 
     # Wait for the server to shutdown
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds $ShutdownWarningSeconds + 5
     
     # Kill SteamCMD if it's still running for whatever reason
     if ($UpdateOrVerifyServer -and (Get-Process -ErrorAction SilentlyContinue | Where-Object Path -eq ($SteamCMDPath + "\steamcmd.exe"))) {
