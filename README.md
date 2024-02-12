@@ -32,7 +32,7 @@ An all-in-one Palworld powershell script for Windows dedicated server hosting.
 - Automatically download **[PALOG](https://github.com/miscord-dev/palog)** to your SteamCMD directory. **You will be asked to agree to this first.**
 - Automatically extracts the RCON port from your ```PalWorldSettings.ini```
 - Automatically extracts the Admin password required for RCON from your ```PalWorldSettings.ini```
-- * If you don't have an Admin password set, you will be asked to create one
+    - If you don't have an Admin password set, you will be asked to create one
 
 ## Modifiable variables
 
