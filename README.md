@@ -45,3 +45,11 @@ If you are getting an error about being unable to run the script please follow t
 * Type in **Set-ExecutionPolicy RemoteSigned** and then try again
 
 If you encounter any other errors or crashes contact @gooseman0 on discord with the error message you've received.
+
+## TODO
+- [ ] Expose more variables to users
+- [ ] Finish WIP support for remote PCs
+- [ ] Add support for "dry runs", servers that start and are set up for the first time through the script
+- [ ] Move from RCON-CLI to Lysec's RCON client
+- [ ] Add PALOG features natively
+- [ ] Clean up unused things from the code
