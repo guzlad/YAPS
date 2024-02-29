@@ -32,8 +32,7 @@ $UpdateOrVerifyServer = $true
 $IsCommunityServer = $false
 
 # Server launch parameters. If $IsCommunityServer is set to true EpicApp=PalServer will be added at the start
-# 28/2/2024: Temp quick fix for RCON not working on v0.1.5.0, added "-RCONPort=25575". 
-$PalServerArguments = "'$(if ($IsCommunityServer) { 'EpicApp=PalServer ' })-useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS -RCONPort=25575'"
+$PalServerArguments = "'$(if ($IsCommunityServer) { 'EpicApp=PalServer ' })-useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS'"
 
 # Set the palworld server priority to High (gives better performance in exchange for higher CPU usage)
 $UseHighPriority = $true
